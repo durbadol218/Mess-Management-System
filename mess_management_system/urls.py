@@ -24,9 +24,8 @@ urlpatterns = [
     path('',include('user.urls')),
     path('meals/',include('meals.urls')),
     path('notifications/', include('notifications.urls')),
-    # path('reports/',include('reports.urls')),
     path('api-auth/', include('rest_framework.urls')),
-    # path('api/payment/', include('payment.urls')),
+    path('api/payment/', include('payment.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

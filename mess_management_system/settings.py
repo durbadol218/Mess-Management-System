@@ -41,17 +41,18 @@ INSTALLED_APPS = [
     'meals',
     'payment',
     'notifications',
-    'reports',
     'rest_framework',
-    'rest_framework.authtoken',
+    # 'rest_framework.authtoken',
     'corsheaders'
 ]
 
-# AUTH_USER_MODEL = 'user.User_Model'
+AUTH_USER_MODEL = 'user.User_Model'
+AUTH_TOKEN_MODEL = 'user.CustomToken'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
+        'user.authentication.CustomTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -60,6 +61,7 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = [
+    'user.backends.CustomAuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
@@ -139,11 +141,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -153,10 +152,45 @@ USE_TZ = True
 STATIC_URL = '/static/'
 # STATICFILES_DIRS = [BASE_DIR / 'static']
 
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# settings.py
+
+# import os
+# from celery.schedules import crontab
+
+# Celery Settings
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Or your preferred broker
+# CELERY_ACCEPT_CONTENT = ['application/json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Or your preferred backend
+# CELERY_TIMEZONE = 'Asia/Dhaka'
+# # Celery Beat Configuration
+# CELERY_BEAT_SCHEDULE = {
+#     'generate-monthly-bills': {
+#         'task': 'mess_management_system.tasks.generate_bills_task',
+#         'schedule': crontab(day_of_month='1', hour='0', minute='0'),
+#     },
+# }
+
+
+SSLCOMMERZ = {
+    'STORE_ID': 'goswa67b06374f03b3',
+    'STORE_PASSWORD': 'goswa67b06374f03b3@ssl',
+    'IS_SANDBOX': True,
+    'SUCCESS_URL': 'http://127.0.0.1:8000/api/payment/success/',
+    'FAIL_URL': 'http://127.0.0.1:8000/api/payment/fail/',
+    'CANCEL_URL': 'http://127.0.0.1:8000/api/payment/cancel/',
+    'IPN_URL': 'http://127.0.0.1:8000/api/payment/ipn/',
+}
+
 
 
 # Email Configuration
@@ -167,3 +201,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'goswamidurbadol@gmail.com'
 EMAIL_HOST_PASSWORD = 'bxackoibeatqymlm'
 DEFAULT_FROM_EMAIL = 'Mess Management goswamidurbadol@gmail.com'
+
+
