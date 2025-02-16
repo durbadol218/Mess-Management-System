@@ -49,6 +49,7 @@ class BillAdmin(admin.ModelAdmin):
     list_display = ('user', 'bill_type','total_amount','due_date','transaction_id', 'status')
     list_filter = ('bill_type', 'status')
     search_field = ('user__username')
+
 # from django.contrib import admin
 # from .models import Bill
 # from django.utils.html import format_html
