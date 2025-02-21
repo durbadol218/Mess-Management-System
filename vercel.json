@@ -1,13 +1,13 @@
 {
-    "builds": [{
-      "src": "mess_management_system/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.11.3" }
-    }],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "mess_management_system/wsgi.py"
-      }
-    ]
+  "builds": [{
+    "src": "mess_management_system/wsgi.py",
+    "use": "@vercel/python",
+    "config": { "maxLambdaSize": "50mb", "runtime": "python3.12" }
+  }],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "mess_management_system/wsgi.py"
+    }
+  ]
 }
