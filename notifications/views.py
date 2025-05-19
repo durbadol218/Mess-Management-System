@@ -8,7 +8,10 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdminUserType
 from django.contrib.auth import get_user_model
 from rest_framework.pagination import PageNumberPagination
-
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.conf import settings
 
 User_Model = get_user_model()
 
