@@ -5,14 +5,15 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.sites.shortcuts import get_current_site
+
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from .models import User_Model, Complaint
 from .serializers import UserRegisterSerializer, UserLoginSerializer,UserProfileUpdateSerializer, ChangePasswordSerializer, UserSerializer, ComplaintSerializer
 from django.shortcuts import redirect
 # from rest_framework.authtoken.models import Token
-from user.models import CustomToken
+from .models import CustomToken
 from rest_framework import permissions
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth import authenticate, login
@@ -68,10 +69,10 @@ def activateAccount(request, uid64, token):
         user.is_active = True
         user.save()
         messages.success(request, "Your account has been successfully activated.")
-        return redirect(reverse('login'))
+        return redirect(reverse('https://mess-management-frontend-five.vercel.app/login.html'))
     else:
         messages.error(request, "The activation link is invalid or has expired.")
-        return redirect(reverse('register'))
+        return redirect(reverse('https://mess-management-frontend-five.vercel.app/register.html'))
 
 
 
