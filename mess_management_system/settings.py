@@ -32,8 +32,8 @@ SECRET_KEY = 'django-insecure-36ilmtnm^9lm=)e-4gsvv3oy4uppxz7$h1+repklrfeebghun8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = ["*"]
-ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app"]
+ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["127.0.0.1", ".vercel.app"]
 
 # LOGIN_URL = 'http://127.0.0.1:5500/login.html'
 # Application definition
@@ -88,9 +88,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
+# CORS_ALLOWED_ORIGINS = [
+#     "http://127.0.0.1:5500",
+#     "http://localhost:5500",
+# ]
+
+CORS_TRUSTED_ORIGINS = [
+    'https://mess-management-system-omega.vercel.app',
+    'https://*.127.0.0.1'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -205,10 +210,10 @@ SSLCOMMERZ = {
     'STORE_ID': 'goswa67b06374f03b3',
     'STORE_PASSWORD': 'goswa67b06374f03b3@ssl',
     'IS_SANDBOX': True,
-    'SUCCESS_URL': 'http://127.0.0.1:8000/api/payment/success/',
-    'FAIL_URL': 'http://127.0.0.1:8000/api/payment/fail/',
-    'CANCEL_URL': 'http://127.0.0.1:8000/api/payment/cancel/',
-    'IPN_URL': 'http://127.0.0.1:8000/api/payment/ipn/',
+    'SUCCESS_URL': 'https://mess-management-system-omega.vercel.app/api/payment/success/',
+    'FAIL_URL': 'https://mess-management-system-omega.vercel.app/api/payment/fail/',
+    'CANCEL_URL': 'https://mess-management-system-omega.vercel.app/api/payment/cancel/',
+    'IPN_URL': 'https://mess-management-system-omega.vercel.app/api/payment/ipn/',
 }
 
 
