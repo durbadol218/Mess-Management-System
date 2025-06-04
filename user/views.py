@@ -69,10 +69,10 @@ def activateAccount(request, uid64, token):
         user.is_active = True
         user.save()
         messages.success(request, "Your account has been successfully activated.")
-        return redirect(reverse('https://mess-management-frontend-five.vercel.app/login.html'))
+        return redirect('https://mess-management-frontend-five.vercel.app/login.html')
     else:
         messages.error(request, "The activation link is invalid or has expired.")
-        return redirect(reverse('https://mess-management-frontend-five.vercel.app/register.html'))
+        return redirect('https://mess-management-frontend-five.vercel.app/register.html')
 
 
 
