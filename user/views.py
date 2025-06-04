@@ -29,6 +29,10 @@ from rest_framework.permissions import AllowAny
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+# from actions import action
 
 class UserRegistrationApiView(APIView):
     serializer_class = UserRegisterSerializer
@@ -236,27 +240,86 @@ class AdminResolveComplaintView(APIView):
         )
         return Response({"message": "Complaint marked as resolved with admin reply."}, status=status.HTTP_200_OK)
 
+# class BillViewSet(viewsets.ModelViewSet):
+#     serializer_class = BillSerializer
+#     permission_classes = [IsAuthenticated]
+    
+#     def get_queryset(self):
+#         user = self.request.user
+#         return Bill.objects.filter(user=user)
+    
+#     @action(detail=False, methods=['get'], url_path='summary/(?P<year>\d+)/(?P<month>\d+)')
+#     def bill_summary(self, request, year, month):
+#         user = request.user
+#         bill = Bill.objects.filter(user=user, due_date__year=year, due_date__month=month).first()
+        
+#         fixed_bill_summary = {bill_type: amount for bill_type, amount in Bill.FIXED_BILL_AMOUNTS.items()}
+#         meal_bill = Bill.calculate_meal_bill(user, int(year), int(month))
+#         total_bill = sum(fixed_bill_summary.values()) + meal_bill['total']
+        
+#         response_data = {
+#             "bill_id": bill.id if bill else None,
+#             "fixed_bills": fixed_bill_summary,
+#             "meal_bills": meal_bill,
+#             "total_bill": total_bill
+#         }
+#         return Response(response_data)
+
+
 class BillViewSet(viewsets.ModelViewSet):
     serializer_class = BillSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         user = self.request.user
+        if user.is_staff or user.user_type == 'admin':
+            return Bill.objects.all()
         return Bill.objects.filter(user=user)
     
-    @action(detail=False, methods=['get'], url_path='summary/(?P<year>\d+)/(?P<month>\d+)')
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        year = request.query_params.get('year')
+        month = request.query_params.get('month')
+        
+        if year and month:
+            queryset = queryset.filter(due_date__year=year, due_date__month=month)
+        
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='summary/(?P<year>\d{4})/(?P<month>\d{1,2})')
     def bill_summary(self, request, year, month):
         user = request.user
+        year = int(year)
+        month = int(month)
+        
+        # Get or compute the bill
         bill = Bill.objects.filter(user=user, due_date__year=year, due_date__month=month).first()
         
-        fixed_bill_summary = {bill_type: amount for bill_type, amount in Bill.FIXED_BILL_AMOUNTS.items()}
-        meal_bill = Bill.calculate_meal_bill(user, int(year), int(month))
-        total_bill = sum(fixed_bill_summary.values()) + meal_bill['total']
-        
+        # Fixed bills: use actual seat_rent + other fixed amounts
+        fixed_bill_summary = {
+            'seat_rent': float(user.seat_rent),
+            'water': float(Bill.FIXED_BILL_AMOUNTS['water']),
+            'khala': float(Bill.FIXED_BILL_AMOUNTS['khala']),
+            'net': float(Bill.FIXED_BILL_AMOUNTS['net']),
+            'current': float(Bill.FIXED_BILL_AMOUNTS['current']),
+            'other': float(Bill.FIXED_BILL_AMOUNTS['other']),
+        }
+
+        # Calculate meal bill
+        meal_bill_data = Bill.calculate_meal_bill(user, year, month)
+        total_meal = float(meal_bill_data['total'])
+
+        # Compute total
+        total_fixed = sum(fixed_bill_summary.values())
+        total_bill = total_fixed + total_meal
+
         response_data = {
             "bill_id": bill.id if bill else None,
             "fixed_bills": fixed_bill_summary,
-            "meal_bills": meal_bill,
-            "total_bill": total_bill
+            "meal_bills": meal_bill_data,
+            "total_bill": round(total_bill, 2),
         }
+
         return Response(response_data)
+    

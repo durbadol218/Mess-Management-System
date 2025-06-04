@@ -35,5 +35,5 @@ urlpatterns = [
     path('complaints/admin/resolve/<int:complaint_id>/', AdminResolveComplaintView.as_view(), name='admin_resolve_complaint'),
     
     # path('user/<int:user_id>/bills/', UserBillsAPIView.as_view(), name='user-bills'),
-    path('<int:user_id>/bills/', BillViewSet.as_view({'get': 'list'}), name='user-bills'),
+    # path('<int:user_id>/bills/', BillViewSet.as_view({'get': 'list'}), name='user-bills'),
 ]

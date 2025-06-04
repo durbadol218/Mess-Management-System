@@ -212,19 +212,38 @@ class ComplaintSerializer(serializers.ModelSerializer):
     def get_user(self, obj):
         return obj.user.username if obj.user else "N/A"
     
+# class BillSerializer(serializers.ModelSerializer):
+#     meal_bill = serializers.SerializerMethodField()
+    
+#     class Meta:
+#         model = Bill
+#         fields = ['user','bill_type','total_amount','due_date','transaction_id','status','meal_bill']
+    
+#     def get_meal_bill(self,obj):
+#         request = self.context.get('request')
+#         if request:
+#             year = request.query_params.get('year')
+#             month = request.query_params.get('month')
+#             if year and month:
+#                 return Bill.calculate_meal_bill(obj.user,int(year),int(month))
+#         return 0
 class BillSerializer(serializers.ModelSerializer):
     meal_bill = serializers.SerializerMethodField()
     
     class Meta:
         model = Bill
-        fields = ['user','bill_type','total_amount','due_data','transaction_id','status','meal_bill']
-    
-    def get_meal_bill(self,obj):
+        fields = [
+            'user', 'bill_type', 'total_amount', 'due_date',
+            'transaction_id', 'status', 'meal_bill'
+        ]
+        read_only_fields = ['total_amount', 'transaction_id']
+
+    def get_meal_bill(self, obj):
         request = self.context.get('request')
         if request:
-            year = request.query_params.get('year')
-            month = request.query_params.get('month')
-            if year and month:
-                return Bill.calculate_meal_bill(obj.user,int(year),int(month))
-        return 0
+            year = request.query_params.get('year') or obj.due_date.year
+            month = request.query_params.get('month') or obj.due_date.month
+            return Bill.calculate_meal_bill(obj.user, int(year), int(month))
+        return {}
+
     
