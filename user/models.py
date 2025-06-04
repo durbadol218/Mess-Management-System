@@ -31,6 +31,18 @@ class User_Model(AbstractUser):
 
     groups = models.ManyToManyField(Group, blank=True)
     user_permissions = models.ManyToManyField(Permission, blank=True)
+    SEAT_CHOICES = [
+    ('double_bed', 'Double Bed Room'),
+    ('private', 'Private Room'),]
+    seat_type = models.CharField(max_length=20, choices=SEAT_CHOICES, default='double_bed')
+    seat_rent = models.DecimalField(max_digits=10, decimal_places=2, default=950.00)
+    
+    def save(self, *args, **kwargs):
+        if self.seat_type == 'private':
+            self.seat_rent = 1100.00
+        else:
+            self.seat_rent = 950.00
+        super().save(*args, **kwargs)
 
 
 
@@ -107,7 +119,7 @@ class Bill(models.Model):
     ]
     
     FIXED_BILL_AMOUNTS = {
-        'mess_rent': 950.00,
+        'mess_rent': 0.00,
         'water': 200.00,
         'khala': 300.00,
         'net': 70.00,
@@ -155,7 +167,16 @@ class Bill(models.Model):
         month = self.due_date.month
         meal_bill = Bill.calculate_meal_bill(self.user, year, month)['total']
         if self.bill_type == 'all_fixed':
-            fixed_bill_total = sum(self.FIXED_BILL_AMOUNTS.values())
+            fixed_bill_total = (
+            self.user.seat_rent +  # dynamic rent from user
+            self.FIXED_BILL_AMOUNTS['water'] +
+            self.FIXED_BILL_AMOUNTS['khala'] +
+            self.FIXED_BILL_AMOUNTS['net'] +
+            self.FIXED_BILL_AMOUNTS['current'] +
+            self.FIXED_BILL_AMOUNTS['other']
+        )
+        elif self.bill_type == 'mess_rent':
+            fixed_bill_total = self.user.seat_rent
         else:
             fixed_bill_total = self.FIXED_BILL_AMOUNTS.get(self.bill_type, 0.00)
         return fixed_bill_total + meal_bill

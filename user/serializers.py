@@ -10,18 +10,19 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'first_name','last_name', 'email', 'reg_no', 
             'education_details', 'contact_number', 'user_type', 'joined_date','address','profile_image',
-            'is_approved', 'created_at', 'updated_at'
+            'is_approved', 'created_at', 'updated_at', 'seat_type', 'seat_rent'
         ]
     
 class UserRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(required=True, write_only=True)
     user_type = serializers.ChoiceField(choices=USER_TYPE, required=True)
+    seat_type = serializers.ChoiceField(choices=User_Model.SEAT_CHOICES, required=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
     class Meta:
         model = User_Model
         fields = [
             'username', 'email', 'first_name','last_name', 'password', 'confirm_password',
-            'education_details', 'contact_number', 'user_type', 'address', 'profile_image', 'joined_date'
+            'education_details', 'contact_number', 'user_type','seat_type', 'address', 'profile_image', 'joined_date'
         ]
 
     def validate(self, data):
@@ -56,6 +57,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             contact_number=validated_data['contact_number'],
             user_type=validated_data['user_type'],
             address=validated_data['address'],
+            seat_type=validated_data.get('seat_type', 'double_bed'),
             profile_image=validated_data.get('profile_image'),
             joined_date=validated_data.get('joined_date'))
         user.set_password(validated_data['password'])
