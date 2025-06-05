@@ -10,6 +10,7 @@ import os
 import uuid
 from meals.models import Meal
 from django.db.models import Count
+from decimal import Decimal
 # from rest_framework.authtoken.models import Token as DefaultToken
 
 def generate_registration_number():
@@ -118,14 +119,24 @@ class Bill(models.Model):
         ('other', 'Other'),
     ]
     
+    # FIXED_BILL_AMOUNTS = {
+    #     'mess_rent': 0.00,
+    #     'water': 200.00,
+    #     'khala': 300.00,
+    #     'net': 70.00,
+    #     'current': 150.00,
+    #     'other': 0.00,
+    # }
     FIXED_BILL_AMOUNTS = {
-        'mess_rent': 0.00,
-        'water': 200.00,
-        'khala': 300.00,
-        'net': 70.00,
-        'current': 150.00,
-        'other': 0.00,
-    }
+    'mess_rent': Decimal('0.00'),
+    'water': Decimal('200.00'),
+    'khala': Decimal('300.00'),
+    'net': Decimal('70.00'),
+    'current': Decimal('150.00'),
+    'other': Decimal('0.00'),
+}
+
+
     
     user = models.ForeignKey(User_Model, on_delete=models.CASCADE, related_name='bills')
     # bill_type = models.CharField(max_length=20, choices=BILL_TYPES,default='all')
@@ -154,32 +165,46 @@ class Bill(models.Model):
             "meals": meal_dict,
             "total": total_bill
         }
-    
+
     # def calculate_total_bill(self):
     #     year = self.due_date.year
     #     month = self.due_date.month
     #     meal_bill = Bill.calculate_meal_bill(self.user, year, month)['total']
-    #     fixed_bill_sum = sum(self.FIXED_BILL_AMOUNTS.values())
-    #     return fixed_bill_sum + meal_bill
-
+    #     if self.bill_type == 'all_fixed':
+    #         fixed_bill_total = (
+    #         self.user.seat_rent +  # dynamic rent from user
+    #         self.FIXED_BILL_AMOUNTS['water'] +
+    #         self.FIXED_BILL_AMOUNTS['khala'] +
+    #         self.FIXED_BILL_AMOUNTS['net'] +
+    #         self.FIXED_BILL_AMOUNTS['current'] +
+    #         self.FIXED_BILL_AMOUNTS['other']
+    #     )
+    #     elif self.bill_type == 'mess_rent':
+    #         fixed_bill_total = self.user.seat_rent
+    #     else:
+    #         fixed_bill_total = self.FIXED_BILL_AMOUNTS.get(self.bill_type, 0.00)
+    #     return fixed_bill_total + meal_bill
+    
     def calculate_total_bill(self):
         year = self.due_date.year
         month = self.due_date.month
-        meal_bill = Bill.calculate_meal_bill(self.user, year, month)['total']
+        meal_bill = Decimal(str(Bill.calculate_meal_bill(self.user, year, month)['total']))
+        
         if self.bill_type == 'all_fixed':
             fixed_bill_total = (
-            self.user.seat_rent +  # dynamic rent from user
-            self.FIXED_BILL_AMOUNTS['water'] +
-            self.FIXED_BILL_AMOUNTS['khala'] +
-            self.FIXED_BILL_AMOUNTS['net'] +
-            self.FIXED_BILL_AMOUNTS['current'] +
-            self.FIXED_BILL_AMOUNTS['other']
-        )
+                self.user.seat_rent +
+                self.FIXED_BILL_AMOUNTS['water'] +
+                self.FIXED_BILL_AMOUNTS['khala'] +
+                self.FIXED_BILL_AMOUNTS['net'] +
+                self.FIXED_BILL_AMOUNTS['current'] +
+                self.FIXED_BILL_AMOUNTS['other']
+            )
         elif self.bill_type == 'mess_rent':
             fixed_bill_total = self.user.seat_rent
         else:
-            fixed_bill_total = self.FIXED_BILL_AMOUNTS.get(self.bill_type, 0.00)
+            fixed_bill_total = self.FIXED_BILL_AMOUNTS.get(self.bill_type, Decimal('0.00'))
         return fixed_bill_total + meal_bill
+    
     
     def save(self, *args, **kwargs):
         self.total_amount = self.calculate_total_bill()
