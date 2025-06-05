@@ -10,9 +10,10 @@ import logging
 from django.http import JsonResponse
 from django.conf import settings
 import logging
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404,redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+
 
 logger = logging.getLogger(__name__)
 
@@ -119,10 +120,10 @@ def payment_success(request):
         bill.payment_status = 'Paid'
         bill.save()
         logger.info(f"Payment successful for bill {bill.id}.")
-        return Response({'message': 'Payment verified and bill updated'}, status=status.HTTP_200_OK)
+        return redirect('https://mess-management-frontend-five.vercel.app/payment_success.html')
     else:
         logger.error(f"Payment validation failed: {response}")
-        return Response({'error': 'Payment validation failed', 'details': response}, status=status.HTTP_400_BAD_REQUEST)
+        return redirect('https://mess-management-frontend-five.vercel.app/payment_fail.html')
 
 
 @csrf_exempt
@@ -138,7 +139,7 @@ def payment_fail(request):
             bill = Bill.objects.get(transaction_id=transaction_id)
             bill.payment_status = 'Failed'
             bill.save()
-            return JsonResponse({'message': 'Bill payment failed and status updated successfully.'})
+            return redirect('https://mess-management-frontend-five.vercel.app/payment_fail.html')
         except Bill.DoesNotExist:
             return JsonResponse({'error': 'Bill not found for this transaction ID.'}, status=404)
     else:
