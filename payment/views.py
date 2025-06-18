@@ -13,6 +13,15 @@ import logging
 from django.shortcuts import get_object_or_404,redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from user.models import Bill
+from user.serializers import BillHistorySerializer
+
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +44,11 @@ def initiate_payment(request):
     except Bill.DoesNotExist:
         logger.error(f"Bill {bill_id} not found for user {user.username}")
         return Response({'error': 'Bill does not exist'}, status=status.HTTP_404_NOT_FOUND)
-
+    
+    if bill.status == 'Paid':
+        logger.warning(f"Attempted to initiate payment for already paid bill {bill.id}")
+        return Response({'error': 'This bill has already been paid.'}, status=status.HTTP_400_BAD_REQUEST)
+    
     payment_data = {
         'total_amount': str(bill.total_amount),
         'currency': 'BDT',
@@ -71,18 +84,33 @@ def initiate_payment(request):
         return Response({'error': 'Failed to create payment session'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# @csrf_exempt
+# @api_view(['POST'])
+# def update_bill_status(bill, status, val_id=None):
+#     if bill.status in ['Completed', 'Failed']:
+#         logger.warning(f"Bill {bill.id} already processed. Current status: {bill.payment_status}")
+#         return
+#     bill.payment_status = status
+#     if val_id:
+#         bill.transaction_id = val_id
+#     bill.status = 'Paid' if status == 'Completed' else 'Failed'
+#     bill.save()
+#     logger.info(f"Bill {bill.id} status updated to {bill.status} with payment status {bill.payment_status}.")
+
+
 @csrf_exempt
 @api_view(['POST'])
 def update_bill_status(bill, status, val_id=None):
-    if bill.payment_status in ['Completed', 'Failed']:
-        logger.warning(f"Bill {bill.id} already processed. Current status: {bill.payment_status}")
+    if bill.status in ['Paid', 'Failed']:  # ✅ Now checking status only
+        logger.warning(f"Bill {bill.id} already processed. Current status: {bill.status}")
         return
-    bill.payment_status = status
-    if val_id:
-        bill.transaction_id = val_id
     bill.status = 'Paid' if status == 'Completed' else 'Failed'
+    if bill.status == 'Paid':
+        bill.payment_date = timezone.now()
+    if val_id:
+        bill.transaction_id = val_id  # Optional: if you expect to override txn ID
     bill.save()
-    logger.info(f"Bill {bill.id} status updated to {bill.status} with payment status {bill.payment_status}.")
+    logger.info(f"Bill {bill.id} marked as {bill.status}.")
 
 
 
@@ -117,7 +145,8 @@ def payment_success(request):
     logger.info(f"Validation response from SSLCOMMERZ: {response}")
 
     if response.get('status') == 'VALID':
-        bill.payment_status = 'Paid'
+        bill.status = 'Paid'
+        bill.payment_date = timezone.now()
         bill.save()
         logger.info(f"Payment successful for bill {bill.id}.")
         return redirect('https://mess-management-frontend-five.vercel.app/payment_success.html')
@@ -137,7 +166,8 @@ def payment_fail(request):
     if status == 'FAILED':
         try:
             bill = Bill.objects.get(transaction_id=transaction_id)
-            bill.payment_status = 'Failed'
+            bill.status = 'Failed'
+            # bill.payment_date = timezone.now()
             bill.save()
             return redirect('https://mess-management-frontend-five.vercel.app/payment_fail.html')
         except Bill.DoesNotExist:
@@ -176,12 +206,12 @@ def payment_ipn(request):
         bill = Bill.objects.get(id=bill_id)
 
         if status == 'VALID':
-            bill.payment_status = 'Paid'
+            bill.status = 'Paid'
             bill.save()
             logger.info(f"IPN validated for bill {bill_id}, transaction ID: {val_id}")
             return Response({'message': 'Payment validated successfully'}, status=status.HTTP_200_OK)
         else:
-            bill.payment_status = 'Failed'
+            bill.status = 'Failed'
             bill.save()
             logger.warning(f"IPN validation failed for bill {bill_id}, status: {status}")
             return Response({'error': 'Payment validation failed'}, status=status.HTTP_400_BAD_REQUEST)
@@ -205,3 +235,15 @@ def payment_callback(request):
     else:
         update_bill_status(bill, 'Failed')
     return Response({"status": "success"})
+
+
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def payment_history(request):
+#     if request.user.user_type == 'Admin':
+#         bills = Bill.objects.filter(status='Paid').order_by('-payment_date')
+#     else:
+#         bills = Bill.objects.filter(user=request.user, status='Paid').order_by('-payment_date')
+#     serializer = BillHistorySerializer(bills, many=True)
+#     return Response(serializer.data)

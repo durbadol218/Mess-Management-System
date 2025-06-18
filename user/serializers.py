@@ -246,4 +246,31 @@ class BillSerializer(serializers.ModelSerializer):
             return Bill.calculate_meal_bill(obj.user, int(year), int(month))
         return {}
 
-    
+
+
+# class BillHistorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Bill
+#         fields = ['id', 'total_amount', 'bill_type', 'due_date', 'status', 'payment_date', 'transaction_id']
+
+
+class BillHistorySerializer(serializers.ModelSerializer):
+    month = serializers.SerializerMethodField()
+    year = serializers.SerializerMethodField()
+    meal_bill = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Bill
+        fields = [
+            'id', 'total_amount', 'bill_type', 'due_date', 'status',
+            'payment_date', 'transaction_id', 'month', 'year', 'meal_bill'
+        ]
+
+    def get_month(self, obj):
+        return obj.due_date.strftime('%B')  # Example: "June"
+
+    def get_year(self, obj):
+        return obj.due_date.year
+
+    def get_meal_bill(self, obj):
+        return Bill.calculate_meal_bill(obj.user, obj.due_date.year, obj.due_date.month)

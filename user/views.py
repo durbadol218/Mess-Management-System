@@ -35,6 +35,12 @@ from django.views.decorators.csrf import csrf_exempt
 import datetime
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import Bill
+from .serializers import BillHistorySerializer
+
 
 class UserRegistrationApiView(APIView):
     serializer_class = UserRegisterSerializer
@@ -368,3 +374,48 @@ class BillViewSet(viewsets.ModelViewSet):
         }
 
         return Response(response_data)
+    
+    
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def bill_history_view(request):
+#     user = request.user
+#     year = request.query_params.get('year')
+#     month = request.query_params.get('month')
+
+#     bills = Bill.objects.filter(user=user)
+
+#     if year:
+#         bills = bills.filter(due_date__year=year)
+#     if month:
+#         bills = bills.filter(due_date__month=month)
+
+#     bills = bills.order_by('-due_date')
+#     serializer = BillHistorySerializer(bills, many=True)
+#     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def bill_history_view(request):
+    user = request.user
+    year = request.query_params.get('year')
+    month = request.query_params.get('month')
+
+    if user.is_superuser or user.user_type == 'Admin':
+        bills = Bill.objects.all()
+    else:
+        bills = Bill.objects.filter(user=user)
+
+    if year:
+        bills = bills.filter(due_date__year=year)
+    if month:
+        bills = bills.filter(due_date__month=month)
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 10
+    result_page = paginator.paginate_queryset(bills.order_by('-due_date'), request)
+
+    serializer = BillHistorySerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+

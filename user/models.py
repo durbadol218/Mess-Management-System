@@ -11,6 +11,8 @@ import uuid
 from meals.models import Meal
 from django.db.models import Count
 from decimal import Decimal
+from django.core.exceptions import ValidationError
+
 # from rest_framework.authtoken.models import Token as DefaultToken
 
 def generate_registration_number():
@@ -118,15 +120,7 @@ class Bill(models.Model):
         ('current', 'Current Bill'),
         ('other', 'Other'),
     ]
-    
-    # FIXED_BILL_AMOUNTS = {
-    #     'mess_rent': 0.00,
-    #     'water': 200.00,
-    #     'khala': 300.00,
-    #     'net': 70.00,
-    #     'current': 150.00,
-    #     'other': 0.00,
-    # }
+
     FIXED_BILL_AMOUNTS = {
     'mess_rent': Decimal('0.00'),
     'water': Decimal('200.00'),
@@ -153,8 +147,9 @@ class Bill(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     transaction_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     due_date = models.DateField()
-    status = models.CharField(max_length=20, default='Pending', choices=[('Pending', 'Pending'), ('Paid', 'Paid')])
-
+    status = models.CharField(max_length=20, default='Pending', choices=[('Pending', 'Pending'), ('Paid', 'Paid'), ('Failed', 'Failed')])
+    payment_date = models.DateTimeField(null=True, blank=True)
+    
     @staticmethod
     def calculate_meal_bill(user, year, month):
         from meals.models import Meal
@@ -207,6 +202,16 @@ class Bill(models.Model):
     
     
     def save(self, *args, **kwargs):
+        if self.status == 'Paid':
+            existing_paid = Bill.objects.filter(
+                user=self.user,
+                due_date__year=self.due_date.year,
+                due_date__month=self.due_date.month,
+                status='Paid'
+            ).exclude(pk=self.pk)
+            if existing_paid.exists():
+                raise ValidationError("This month's bill has already been paid.")
+
         self.total_amount = self.calculate_total_bill()
         super().save(*args, **kwargs)
         

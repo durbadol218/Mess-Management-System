@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from .views import bill_history_view
 
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
@@ -15,6 +16,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('bills/history/', bill_history_view, name='bill-history'),
     path('', include(router.urls)),
     path('<int:pk>/update/', views.UserProfileUpdateView.as_view(), name='profile-update'),
     path('register/', views.UserRegistrationApiView.as_view(), name='register'),
