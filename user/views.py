@@ -40,6 +40,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Bill
 from .serializers import BillHistorySerializer
+from .utils.date_helpers import get_last_day_of_month
 
 
 class UserRegistrationApiView(APIView):
@@ -363,9 +364,10 @@ class BillViewSet(viewsets.ModelViewSet):
             bill = Bill.objects.create(
                 user=user,
                 bill_type='all_fixed',
-                due_date=datetime.date(year, month, 1),
+                due_date=get_last_day_of_month(year, month),
                 status='Pending'
             )
+
         response_data = {
             "bill_id": bill.id,
             "fixed_bills": fixed_bill_summary,
