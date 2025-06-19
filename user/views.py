@@ -403,9 +403,16 @@ def bill_history_view(request):
     user = request.user
     year = request.query_params.get('year')
     month = request.query_params.get('month')
+    user_id = request.query_params.get('user_id')
 
-    if user.is_superuser or user.user_type == 'Admin':
-        bills = Bill.objects.all()
+    if user.user_type == 'Admin':
+        bills = Bill.objects.select_related('user').all()
+        if user_id:
+            try:
+                user_id = int(user_id)
+                bills = bills.filter(user__id=user_id)
+            except ValueError:
+                return Response({"detail": "Invalid user_id"}, status=400)
     else:
         bills = Bill.objects.filter(user=user)
 

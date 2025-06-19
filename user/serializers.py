@@ -259,13 +259,23 @@ class BillHistorySerializer(serializers.ModelSerializer):
     year = serializers.SerializerMethodField()
     meal_bill = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
 
     class Meta:
         model = Bill
         fields = [
             'id', 'total_amount', 'bill_type', 'due_date', 'status',
-            'payment_date', 'transaction_id', 'month', 'year', 'meal_bill'
+            'payment_date', 'transaction_id', 'month', 'year', 'meal_bill', 'user'
         ]
+        
+        
+    def get_user(self, obj):
+        return {
+            "id": obj.user.id,
+            "username": obj.user.username,
+            "email": obj.user.email,
+        }
+
 
     def get_month(self, obj):
         return obj.due_date.strftime('%B')
