@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User_Model, Complaint, CustomToken, Bill
+from .models import User_Model, Complaint, CustomToken, Bill, ContactMessage
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'first_name', 'last_name', 'user_type', 'is_approved')
@@ -50,6 +50,7 @@ class BillAdmin(admin.ModelAdmin):
     list_filter = ('bill_type', 'status')
     search_field = ('user__username')
 
+admin.site.register(ContactMessage)
 # from django.contrib import admin
 # from .models import Bill
 # from django.utils.html import format_html

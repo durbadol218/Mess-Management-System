@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .constants import USER_TYPE
 from rest_framework import serializers
-from .models import User_Model, Complaint, Bill
+from .models import User_Model, Complaint, Bill, ContactMessage
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
 class UserSerializer(serializers.ModelSerializer):
@@ -293,3 +293,8 @@ class BillHistorySerializer(serializers.ModelSerializer):
         meal_total = float(meal_bill.get('total', 0)) if meal_bill else 0
         
         return fixed_total + meal_total
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ['id', 'name', 'email', 'message', 'created_at']

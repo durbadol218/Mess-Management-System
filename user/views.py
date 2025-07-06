@@ -10,7 +10,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from .models import User_Model, Complaint
-from .serializers import UserRegisterSerializer, UserLoginSerializer,UserProfileUpdateSerializer, ChangePasswordSerializer, UserSerializer, ComplaintSerializer
+from .serializers import UserRegisterSerializer, UserLoginSerializer,UserProfileUpdateSerializer, ChangePasswordSerializer, UserSerializer, ComplaintSerializer, ContactMessageSerializer
 from django.shortcuts import redirect
 # from rest_framework.authtoken.models import Token
 from .models import CustomToken
@@ -428,3 +428,11 @@ def bill_history_view(request):
     serializer = BillHistorySerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
 
+
+class ContactMessageAPIView(APIView):
+    def post(self, request):
+        serializer = ContactMessageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Message received successfully!'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
